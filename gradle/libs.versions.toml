@@ -1,0 +1,33 @@
+[versions]
+agp = "9.1.1"
+androidSdkCommonVersion = "32.1.1"
+android-compileSdk = "36"
+android-minSdk = "24"
+android-minSdkDate = "26"
+kotlin = "2.2.21"
+kotlinPoetVersion = "2.2.0"
+mavenPublish = "0.37.0"
+gradle-plugin-publish = "2.0.0"
+kotlinx-datetime = "0.7.1"
+kotlinxSerializationJson = "1.9.0"
+
+# Library Version
+bitsstrings = "1.0.0"
+
+[libraries]
+kotlinPoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinPoetVersion" }
+kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+androidGradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+androidSdkCommon = { module = "com.android.tools:sdk-common", version.ref = "androidSdkCommonVersion" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+
+[plugins]
+androidKotlinMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
+gradle-plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "gradle-plugin-publish" }
+kotlinxSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

@@ -1,0 +1,9 @@
+BitsStrings
+Copyright 2026 bitsfabrik
+
+This product includes software derived from moko-resources
+(https://github.com/icerockdev/moko-resources),
+Copyright 2019 IceRock MAG Inc., licensed under the Apache License, Version 2.0.
+
+The public API (StringResource, PluralsResource and the StringDesc hierarchy)
+and parts of the initial implementation are based on moko-resources.
