@@ -85,7 +85,7 @@ Many thanks to the moko-resources authors for the API design. If you need images
 
 ```toml
 [versions]
-bitsstrings = "4.0.0"
+bitsstrings = "1.0.0"
 
 [libraries]
 bitsfabrik-bitsstrings-core = { group = "com.bitsfabrik.bitsstrings", name = "core", version.ref = "bitsstrings" }
