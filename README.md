@@ -68,7 +68,7 @@ Generation runs automatically before compilation and on Gradle sync, so the IDE 
 
 ```toml
 [versions]
-bitsstrings = "1.0.0"
+bitsstrings = "1.1.0"
 
 [libraries]
 bitsfabrik-bitsstrings-core = { group = "com.bitsfabrik.bitsstrings", name = "core", version.ref = "bitsstrings" }
