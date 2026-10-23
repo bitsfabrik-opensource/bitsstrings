@@ -12,7 +12,7 @@ kotlinx-datetime = "0.7.1"
 kotlinxSerializationJson = "1.9.0"
 
 # Library Version
-bitsstrings = "1.0.0"
+bitsstrings = "1.1.0-SNAPSHOT"
 
 [libraries]
 kotlinPoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinPoetVersion" }
