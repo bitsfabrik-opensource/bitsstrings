@@ -11,7 +11,7 @@ internal class ResourceFilesGenerator(
 ) {
 
     fun generateResources(bitsStringFile: BitsStringFile, defaultLanguage: String) {
-        outputSourcesDir.deleteRecursively()
+        generator.ownedFiles(outputSourcesDir).forEach { it.deleteRecursively() }
 
         val files = generator.generateResources(bitsStringFile, defaultLanguage)
 

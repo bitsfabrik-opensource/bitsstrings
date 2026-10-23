@@ -25,8 +25,8 @@ internal fun registerAndroidGenerateTask(
         generateTask.resourcesClassName.set(extension.resourcesClassName)
         generateTask.resourcesPackageName.set(extension.resourcesPackage)
 
-        val stringsIniFile = File(project.projectDir, extension.stringsIniPath.get())
-        generateTask.stringsIniFile.set(stringsIniFile)
+        generateTask.stringsIniFile.set(project.file(extension.stringsIniPath.get()))
+        generateTask.keyPrefix.set(extension.keyPrefix)
 
         generateTask.androidRClassPackage.set(project.getAndroidPackage())
 

@@ -8,6 +8,9 @@ abstract class AndroidStringGeneratorPluginExtension {
     abstract val resourcesPackage: Property<String>
     abstract val resourcesClassName: Property<String>
     abstract val stringsIniPath: Property<String>
+
+    /** If set, the build fails for every key of the strings.ini that does not start with it. */
+    abstract val keyPrefix: Property<String>
     abstract val defaultLang: Property<String>
 }
 

@@ -8,14 +8,15 @@ import com.bitsfabrik.bitsstrings.generator.testing.singular
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
-/** The default apple flavour: a single pretty printed `Localizable.xcstrings` catalog. */
+/** The default apple flavour: a single pretty printed `<table>.xcstrings` catalog. */
 internal class IosStringCatalogResourceFileGeneratorTest {
 
-    private val generator = IosStringCatalogResourceFileGenerator()
+    private val generator = IosStringCatalogResourceFileGenerator("LoginStrings")
 
     private val file = bitsStringFile(
         section(
@@ -35,7 +36,7 @@ internal class IosStringCatalogResourceFileGeneratorTest {
 
         assertEquals(1, generated.size)
         val (catalogFile, content) = generated.single()
-        assertEquals("Localizable.xcstrings", catalogFile.path)
+        assertEquals("LoginStrings.xcstrings", catalogFile.path)
 
         // pretty printed with a two space indent, not the raw single line the transformer emits
         assertContains(content, "\n  \"sourceLanguage\": \"de\"")
@@ -69,7 +70,17 @@ internal class IosStringCatalogResourceFileGeneratorTest {
     fun writesACatalogEvenForAFileWithoutStrings() {
         val generated = generator.generateResources(bitsStringFile(section("General")), "de")
 
-        assertEquals("Localizable.xcstrings", generated.single().first.path)
+        assertEquals("LoginStrings.xcstrings", generated.single().first.path)
+    }
+
+    @Test
+    fun claimsOnlyItsOwnCatalogInTheSharedResourcesDirectory() {
+        val outputDir = File("resources/bitsstrings")
+
+        assertEquals(
+            listOf(File(outputDir, "LoginStrings.xcstrings")),
+            generator.ownedFiles(outputDir)
+        )
     }
 
     private fun IosStringCatalogResourceFileGenerator.catalogOf(

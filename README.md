@@ -17,6 +17,7 @@ Write every translation once, in one file. bitsstrings generates the native reso
 - [Installation](#installation-kotlin-multiplatform)
 - [The `strings.ini` format](#the-stringsini-format)
 - [Usage](#usage)
+- [Multiple modules](#multiple-modules)
 - [Date & time extension](#date--time-extension-optional)
 - [Android-only projects](#android-only-projects)
 - [Comparison with moko-resources](#comparison-with-moko-resources)
@@ -122,6 +123,8 @@ bitsstrings {
     resourcesClassName = "Strings"            // default: "BitsStrings"
     stringsIniPath     = "../strings.ini"     // default: "../strings.ini", relative to the module
     iosResourcesDir    = "../iosApp"          // default: "../iosApp"
+    iosTableName       = "Localizable"        // default: "Localizable"
+    keyPrefix          = "login_"             // default: none
     defaultLang        = "en"                 // default: "de"
     legacyGeneration   = false                // default: false, see below
 }
@@ -133,14 +136,16 @@ bitsstrings {
 | `resourcesClassName` | Name of the generated accessor object |
 | `stringsIniPath` | Location of `strings.ini`, relative to the module |
 | `iosResourcesDir` | Directory the iOS resource files are written to |
+| `iosTableName` | Name of the iOS strings table the keys are written to and resolved from |
+| `keyPrefix` | If set, the build fails for every key that does not start with it |
 | `defaultLang` | Fallback used when a translation is missing |
-| `legacyGeneration` | `true` writes `<lang>.lproj/Localizable.strings` instead of a String Catalog. Plurals are **not** supported in this mode |
+| `legacyGeneration` | `true` writes `<lang>.lproj/<iosTableName>.strings` instead of a String Catalog. Plurals are **not** supported in this mode |
 
 ### 4. Wire up iOS
 
-The plugin writes `Localizable.xcstrings` into `iosResourcesDir`. Add that file to your app target in Xcode once. Later regenerations update it in place.
+The plugin writes `<iosTableName>.xcstrings` (by default `Localizable.xcstrings`) into `iosResourcesDir`. Add that file to your app target in Xcode once. Later regenerations update it in place. The plugin only ever replaces its own table, other files in `iosResourcesDir` stay untouched.
 
-With `legacyGeneration = true`, it writes one `<lang>.lproj/Localizable.strings` per language instead. Add the folder as a **folder reference** so new languages are picked up automatically.
+With `legacyGeneration = true`, it writes one `<lang>.lproj/<iosTableName>.strings` per language instead. Add the folder as a **folder reference** so new languages are picked up automatically.
 
 ## The `strings.ini` format
 
@@ -198,7 +203,7 @@ actual object BitsStrings {
 
 // iosMain
 actual object BitsStrings {
-    actual val general_label_ok: StringResource = StringResource("general_label_ok")
+    actual val general_label_ok: StringResource = StringResource(resourceId = "general_label_ok", tableName = "Localizable")
     // ...
 }
 ```
@@ -257,6 +262,50 @@ let text = stringDesc.localized()
 
 `StringDesc.LocaleType.Custom(locale:)` resolves the string against a specific `.lproj` bundle, independent of the device language.
 
+## Multiple modules
+
+Strings can live next to the feature that uses them instead of in one big file. Every module that applies the plugin owns **one** `strings.ini` and gets its own accessor object and its own iOS table. A single module needs none of this; the defaults keep working unchanged.
+
+Give every module a unique class name and iOS table, and point all of them at the same folder of the app:
+
+```kotlin
+// feature/login/build.gradle.kts
+kotlin {
+    android {
+        namespace = "com.example.login"
+        androidResources.enable = true   // required, off by default for KMP libraries
+    }
+}
+
+bitsstrings {
+    resourcesPackage   = "com.example.login.resources"
+    resourcesClassName = "LoginStrings"
+    stringsIniPath     = "strings.ini"
+    iosResourcesDir    = rootDir.resolve("resources/bitsstrings").path
+    iosTableName       = "LoginStrings"
+    keyPrefix          = "login_"
+}
+```
+
+```
+my-app/
+├── resources/bitsstrings/        ← iOS tables of all modules
+│   ├── LoginStrings.xcstrings
+│   └── SharedStrings.xcstrings
+├── feature/login/strings.ini     → com.example.login.resources.LoginStrings
+└── shared/strings.ini            → com.example.shared.resources.SharedStrings
+```
+
+- **iOS:** every generated `StringResource` carries its table (`tableName = "LoginStrings"`), so lookups never mix up modules. Add `resources/bitsstrings` to the app target once, as a normal group: a String Catalog inside a folder reference is copied, not compiled. If Swift code needs a feature module's object, export it from the umbrella framework (`export(project(":feature:login"))`).
+- **Android:** nothing to do. AGP merges the resources of all modules and every object references its own module's `R` class.
+- `rootDir` is the app's root project, also for a module that lives in a git submodule shared by several apps.
+
+| Pitfall | What happens |
+|---|---|
+| Same `iosTableName` in two modules | Both would write the same table into the same folder. The build fails and names both modules. |
+| Same key in two modules | Android merges resources by name, so one value silently wins. Use a `keyPrefix` per module. |
+| Android resources disabled | KMP library modules have them off by default. The build fails with a hint to `androidResources.enable = true`. |
+
 ## Date & time extension (optional)
 
 ```kotlin
@@ -302,6 +351,7 @@ bitsfabrikAndroidStrings {
     resourcesPackage   = "com.example.myandroidapp"
     resourcesClassName = "Strings"        // default: "BitsStrings"
     stringsIniPath     = "../strings.ini"
+    keyPrefix          = "app_"           // default: none
     defaultLang        = "en"             // default: "de"
 }
 ```

@@ -18,7 +18,8 @@ actual data class PluralStringDesc actual constructor(
     override fun localized(localeType: LocaleType): String {
         val string = localizedString(
             pluralsRes.resourceId,
-            localeType = localeType
+            localeType = localeType,
+            tableName = pluralsRes.tableName
         )
 
         @OptIn(BetaInteropApi::class)

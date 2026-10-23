@@ -1,6 +1,7 @@
 package com.bitsfabrik.bitsstrings.generator.tasks
 
 import com.bitsfabrik.bitsstrings.generator.domain.BitsStringFile
+import com.bitsfabrik.bitsstrings.generator.domain.requireKeyPrefix
 import com.bitsfabrik.bitsstrings.generator.iniparser.IniParser
 import com.bitsfabrik.bitsstrings.generator.iniparser.StringIniParsingError
 import org.gradle.api.DefaultTask
@@ -28,6 +29,11 @@ abstract class AbstractGenerateStringsTask : DefaultTask() {
     @get:Input
     abstract val defaultLanguage: Property<String>
 
+    /** See [com.bitsfabrik.bitsstrings.generator.plugins.extensions.BitsStringsGeneratorPluginExtension.keyPrefix]. */
+    @get:Optional
+    @get:Input
+    abstract val keyPrefix: Property<String>
+
     /** Generated kotlin mappings. */
     @get:OutputDirectory
     abstract val outputSourcesDir: DirectoryProperty
@@ -53,11 +59,15 @@ abstract class AbstractGenerateStringsTask : DefaultTask() {
             return null
         }
 
-        try {
-            return IniParser(iniFile).read()
+        val bitsStringFile = try {
+            IniParser(iniFile).read()
         } catch (ex: StringIniParsingError) {
             throw GradleException("Failed to read strings.ini (${ex.message})")
         }
+
+        keyPrefix.orNull?.let { prefix -> bitsStringFile.requireKeyPrefix(prefix, iniFile.path) }
+
+        return bitsStringFile
     }
 }
 

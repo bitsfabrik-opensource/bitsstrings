@@ -6,7 +6,6 @@ import com.bitsfabrik.bitsstrings.generator.tasks.GenerateBitsStringsTask
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.tooling.core.extrasKeyOf
-import java.io.File
 import java.util.Locale
 
 /**
@@ -45,9 +44,11 @@ private fun KotlinSourceSet.registerGenerateTask(
         task.sourceSetName.set(sourceSetName)
 
         // input
-        task.stringsIniFile.set(File(project.projectDir, extension.stringsIniPath.get()))
+        task.stringsIniFile.set(project.file(extension.stringsIniPath.get()))
         task.defaultLanguage.set(extension.defaultLang)
         task.legacyGeneration.set(extension.legacyGeneration)
+        task.keyPrefix.set(extension.keyPrefix)
+        task.iosTableName.set(extension.iosTableName)
 
         // generated kotlin mappings
         task.resourcesPackageName.set(extension.resourcesPackage)
@@ -61,8 +62,11 @@ private fun KotlinSourceSet.registerGenerateTask(
             GeneratedSourceSet.ANDROID ->
                 task.androidResourcesDir.set(project.layout.buildDirectory.dir("$generatedDir/res"))
 
-            GeneratedSourceSet.IOS ->
-                task.iosResourcesDir.set(File(project.projectDir, extension.iosResourcesDir.get()))
+            GeneratedSourceSet.IOS -> {
+                val iosResourcesDir = project.file(extension.iosResourcesDir.get())
+                project.claimIosTable(iosResourcesDir, extension.iosTableName.get())
+                task.iosResourcesDir.set(iosResourcesDir)
+            }
 
             // commonMain holds the `expect` mappings and no resources
             GeneratedSourceSet.COMMON, null -> Unit

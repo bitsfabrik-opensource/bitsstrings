@@ -200,6 +200,13 @@ class BitsStringsGeneratorPlugin : Plugin<Project> {
             if (compilation !is KotlinMultiplatformAndroidCompilation) return@onVariants
             if (variant.name != compilation.componentName) return@onVariants
 
+            // resources are off by default for this plugin; without them the generated R references
+            // compile against nothing and every lookup crashes at runtime
+            if (!androidResources.enable) throw GradleException(
+                "bitsstrings: android resources are disabled in '${project.path}'. Enable them via " +
+                        "kotlin { android { androidResources.enable = true } }"
+            )
+
             variant.sources.res?.addGeneratedSourceDirectory(
                 taskProvider = genTask,
                 wiredWith = GenerateBitsStringsTask::androidResourcesDir

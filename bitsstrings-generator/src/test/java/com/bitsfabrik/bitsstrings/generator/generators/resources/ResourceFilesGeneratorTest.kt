@@ -70,9 +70,28 @@ internal class ResourceFilesGeneratorTest : TempDirectoryTest() {
         assertFalse(stale.exists())
     }
 
+    @Test
+    fun keepsForeignFilesWhenTheGeneratorOnlyClaimsItsOwnOutput() {
+        val outputDir = dir("resources")
+        val foreign = outputDir.writeStaleFile("OtherModuleStrings.xcstrings")
+        val stale = outputDir.writeStaleFile("LoginStrings.xcstrings")
+        val platformGenerator = FakePlatformStringResourcesGenerator(
+            ownedFiles = listOf("LoginStrings.xcstrings"),
+        )
+
+        ResourceFilesGenerator(outputDir, platformGenerator).generateResources(file, "de")
+
+        assertTrue(foreign.exists())
+        assertFalse(stale.exists())
+    }
+
     private class FakePlatformStringResourcesGenerator(
         private vararg val files: Pair<String, String>,
+        private val ownedFiles: List<String>? = null,
     ) : PlatformStringResourcesGenerator {
+
+        override fun ownedFiles(outputDir: File): List<File> =
+            ownedFiles?.map { File(outputDir, it) } ?: super.ownedFiles(outputDir)
 
         val calls = mutableListOf<Pair<BitsStringFile, String>>()
 

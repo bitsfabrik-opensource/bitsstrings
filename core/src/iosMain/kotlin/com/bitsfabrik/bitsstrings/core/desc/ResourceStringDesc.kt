@@ -12,6 +12,6 @@ actual data class ResourceStringDesc actual constructor(
     }
 
     override fun localized(localeType: LocaleType): String {
-        return Utils.localizedString(stringRes.resourceId, localeType)
+        return Utils.localizedString(stringRes.resourceId, localeType, stringRes.tableName)
     }
 }

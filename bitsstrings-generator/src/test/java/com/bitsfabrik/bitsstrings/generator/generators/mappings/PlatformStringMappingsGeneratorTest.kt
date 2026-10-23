@@ -45,17 +45,23 @@ class PlatformStringMappingsGeneratorTest {
     }
 
     @Test
-    fun appleResolvesThroughTheResourceIdOfTheStringsFile() {
-        val code = generate(AppleStringMappingsGenerator())
+    fun appleResolvesThroughTheResourceIdOfItsOwnTable() {
+        val code = generate(AppleStringMappingsGenerator("LoginStrings"))
 
         assertContains(code, "actual object BitsStrings")
-        assertContains(code, "StringResource(resourceId = \"general.label.ok\")")
-        assertContains(code, "PluralsResource(resourceId = \"general.message.count\")")
+        assertContains(
+            code,
+            "StringResource(resourceId = \"general.label.ok\", tableName = \"LoginStrings\")"
+        )
+        assertContains(
+            code,
+            "PluralsResource(resourceId = \"general.message.count\", tableName = \"LoginStrings\")"
+        )
     }
 
     @Test
     fun appleMarksTheObjectAndEveryPropertyAsActual() {
-        val code = generate(AppleStringMappingsGenerator())
+        val code = generate(AppleStringMappingsGenerator("LoginStrings"))
 
         assertEquals(3, code.split("actual").size - 1, "object plus two properties:\n$code")
     }
@@ -107,7 +113,7 @@ class PlatformStringMappingsGeneratorTest {
 
     @Test
     fun emitsPropertiesInTheOrderTheKeysWereParsed() {
-        val code = generate(AppleStringMappingsGenerator())
+        val code = generate(AppleStringMappingsGenerator("LoginStrings"))
 
         assertTrue(
             code.indexOf("general_label_ok") < code.indexOf("general_message_count"),

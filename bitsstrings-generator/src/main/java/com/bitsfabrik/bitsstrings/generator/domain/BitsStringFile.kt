@@ -68,6 +68,9 @@ internal data class BitsStringFile(
         fun build() = BitsStringFile(sections.map { it.build() })
     }
 
+    fun getKeys(): List<String> =
+        sections.flatMap { it.stringDefinitions }.map { it.key }
+
     fun getLanguages(): Set<String> {
         return sections.flatMap { s ->
             s.stringDefinitions.flatMap { d ->

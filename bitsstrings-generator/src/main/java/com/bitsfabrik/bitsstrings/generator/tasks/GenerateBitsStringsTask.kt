@@ -33,6 +33,10 @@ abstract class GenerateBitsStringsTask : AbstractGenerateStringsTask() {
     @get:Input
     abstract val legacyGeneration: Property<Boolean>
 
+    /** The ios strings table this module's keys are generated into and looked up from. */
+    @get:Input
+    abstract val iosTableName: Property<String>
+
     /** Only set for the ios source set, see [androidResourcesDir]. */
     @get:Optional
     @get:OutputDirectory
@@ -67,9 +71,9 @@ abstract class GenerateBitsStringsTask : AbstractGenerateStringsTask() {
 
             GeneratedSourceSet.IOS -> {
                 val gen = if(legacyGeneration.get()) {
-                    IosLegacyResourceFilesGenerator()
+                    IosLegacyResourceFilesGenerator(iosTableName.get())
                 } else{
-                    IosStringCatalogResourceFileGenerator()
+                    IosStringCatalogResourceFileGenerator(iosTableName.get())
                 }
 
                 ResourceFilesGenerator(
@@ -94,7 +98,7 @@ abstract class GenerateBitsStringsTask : AbstractGenerateStringsTask() {
                 isActual = true
             )
 
-            GeneratedSourceSet.IOS -> AppleStringMappingsGenerator()
+            GeneratedSourceSet.IOS -> AppleStringMappingsGenerator(iosTableName.get())
         }
     }
 

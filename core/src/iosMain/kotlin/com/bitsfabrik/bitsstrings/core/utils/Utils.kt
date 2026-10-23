@@ -18,13 +18,17 @@ object Utils {
         return args.map { (it as? StringDesc)?.localized(localeType) ?: it }.toTypedArray()
     }
 
-    fun localizedString(resourceId: String, localeType: LocaleType): String {
+    fun localizedString(
+        resourceId: String,
+        localeType: LocaleType,
+        tableName: String? = null
+    ): String {
         val mainBundle = NSBundle.mainBundle
         val bundle = localeType.getLocaleBundle(mainBundle)
         val stringInCurrentLocale = bundle.localizedStringForKey(
             key = resourceId,
             value = null,
-            table = null
+            table = tableName
         )
 
         return if (stringInCurrentLocale == resourceId) {
@@ -33,7 +37,7 @@ object Utils {
             val stringInDefaultBundle = mainBundle.localizedStringForKey(
                 key = resourceId,
                 value = null,
-                table = null
+                table = tableName
             )
 
             if (stringInDefaultBundle == resourceId) {
@@ -44,7 +48,7 @@ object Utils {
                 fallbackLocaleBundle.localizedStringForKey(
                     key = resourceId,
                     value = null,
-                    table = null
+                    table = tableName
                 )
             } else {
                 stringInDefaultBundle

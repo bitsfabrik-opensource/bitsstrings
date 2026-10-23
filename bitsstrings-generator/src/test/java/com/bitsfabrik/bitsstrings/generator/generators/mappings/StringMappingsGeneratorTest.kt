@@ -26,7 +26,7 @@ internal class StringMappingsGeneratorTest : TempDirectoryTest() {
     fun writesTheResourcesObjectIntoItsPackageDirectory() {
         val outputDir = dir("src")
 
-        generator(outputDir, AppleStringMappingsGenerator()).generateMappings(file)
+        generator(outputDir, AppleStringMappingsGenerator("LoginStrings")).generateMappings(file)
 
         assertTrue(File(outputDir, "com/example/app/BitsStrings.kt").isFile)
     }
@@ -35,7 +35,7 @@ internal class StringMappingsGeneratorTest : TempDirectoryTest() {
     fun namesTheFileAndTheObjectAfterTheConfiguredClassName() {
         val outputDir = dir("src")
 
-        generator(outputDir, AppleStringMappingsGenerator(), resourcesClassName = "MR")
+        generator(outputDir, AppleStringMappingsGenerator("LoginStrings"), resourcesClassName = "MR")
             .generateMappings(file)
 
         val generated = File(outputDir, "com/example/app/MR.kt")
@@ -45,7 +45,7 @@ internal class StringMappingsGeneratorTest : TempDirectoryTest() {
 
     @Test
     fun declaresPropertiesUnderTheirRawIniKey() {
-        val code = generateAndRead(AppleStringMappingsGenerator())
+        val code = generateAndRead(AppleStringMappingsGenerator("LoginStrings"))
 
         assertContains(code, "val login_label_passwordReset: StringResource")
         assertContains(code, "val login_message_attemptsLeft: PluralsResource")
@@ -53,11 +53,11 @@ internal class StringMappingsGeneratorTest : TempDirectoryTest() {
 
     @Test
     fun mapsAppleResourceIdsToTheDottedKeyOnlyInLegacyMode() {
-        val legacyCode = generateAndRead(AppleStringMappingsGenerator(), legacy = true)
-        val catalogCode = generateAndRead(AppleStringMappingsGenerator(), legacy = false)
+        val legacyCode = generateAndRead(AppleStringMappingsGenerator("LoginStrings"), legacy = true)
+        val catalogCode = generateAndRead(AppleStringMappingsGenerator("LoginStrings"), legacy = false)
 
-        assertContains(legacyCode, "StringResource(resourceId = \"login.label.passwordReset\")")
-        assertContains(catalogCode, "StringResource(resourceId = \"login_label_passwordReset\")")
+        assertContains(legacyCode, "StringResource(resourceId = \"login.label.passwordReset\", tableName = \"LoginStrings\")")
+        assertContains(catalogCode, "StringResource(resourceId = \"login_label_passwordReset\", tableName = \"LoginStrings\")")
     }
 
     @Test
@@ -79,7 +79,7 @@ internal class StringMappingsGeneratorTest : TempDirectoryTest() {
         )
         val outputDir = dir("src")
 
-        generator(outputDir, AppleStringMappingsGenerator()).generateMappings(multiSection)
+        generator(outputDir, AppleStringMappingsGenerator("LoginStrings")).generateMappings(multiSection)
 
         val code = File(outputDir, "com/example/app/BitsStrings.kt").readText()
         assertTrue(code.indexOf("general_label_ok") < code.indexOf("login_label_reset"), code)
@@ -90,7 +90,7 @@ internal class StringMappingsGeneratorTest : TempDirectoryTest() {
         val outputDir = dir("src")
         val stale = outputDir.writeStaleFile("com/example/app/RemovedStrings.kt")
 
-        generator(outputDir, AppleStringMappingsGenerator()).generateMappings(file)
+        generator(outputDir, AppleStringMappingsGenerator("LoginStrings")).generateMappings(file)
 
         assertFalse(stale.exists())
         assertTrue(File(outputDir, "com/example/app/BitsStrings.kt").isFile)
@@ -100,7 +100,7 @@ internal class StringMappingsGeneratorTest : TempDirectoryTest() {
     fun writesAnObjectWithoutPropertiesForAFileWithoutKeys() {
         val outputDir = dir("src")
 
-        generator(outputDir, AppleStringMappingsGenerator())
+        generator(outputDir, AppleStringMappingsGenerator("LoginStrings"))
             .generateMappings(bitsStringFile(section("General")))
 
         val code = File(outputDir, "com/example/app/BitsStrings.kt").readText()
@@ -112,7 +112,7 @@ internal class StringMappingsGeneratorTest : TempDirectoryTest() {
     fun putsTheObjectInTheConfiguredPackage() {
         val outputDir = dir("src")
 
-        generator(outputDir, AppleStringMappingsGenerator(), resourcesPackage = "org.other.app")
+        generator(outputDir, AppleStringMappingsGenerator("LoginStrings"), resourcesPackage = "org.other.app")
             .generateMappings(file)
 
         val generated = File(outputDir, "org/other/app/BitsStrings.kt")

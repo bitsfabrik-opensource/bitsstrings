@@ -9,7 +9,10 @@ import org.gradle.api.GradleException
 import java.io.File
 
 
-internal class IosStringCatalogResourceFileGenerator : PlatformStringResourcesGenerator {
+/** Writes `<tableName>.xcstrings`; the ios resources dir is shared by all modules of an app. */
+internal class IosStringCatalogResourceFileGenerator(
+    private val tableName: String,
+) : PlatformStringResourcesGenerator {
 
     @OptIn(ExperimentalSerializationApi::class)
     private val json = Json {
@@ -29,10 +32,15 @@ internal class IosStringCatalogResourceFileGenerator : PlatformStringResourcesGe
                 Json.parseToJsonElement(catalog)
             )
 
-            return listOf(File("Localizable.xcstrings") to prettyPrinted)
+            return listOf(catalogFile() to prettyPrinted)
 
         } catch (err: ResourceFileGenerationError) {
             throw GradleException("ResourceFile Generation Failed! ${err.message}")
         }
     }
+
+    override fun ownedFiles(outputDir: File): List<File> =
+        listOf(File(outputDir, catalogFile().path))
+
+    private fun catalogFile() = File("$tableName.xcstrings")
 }

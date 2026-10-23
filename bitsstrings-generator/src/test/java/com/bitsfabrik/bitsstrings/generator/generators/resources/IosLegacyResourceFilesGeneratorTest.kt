@@ -1,5 +1,6 @@
 package com.bitsfabrik.bitsstrings.generator.generators.resources
 
+import com.bitsfabrik.bitsstrings.generator.testing.TempDirectoryTest
 import com.bitsfabrik.bitsstrings.generator.testing.bitsStringFile
 import com.bitsfabrik.bitsstrings.generator.testing.plural
 import com.bitsfabrik.bitsstrings.generator.testing.section
@@ -12,10 +13,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
-/** The legacy apple layout: one `<lang>.lproj/Localizable.strings` per language, no plurals. */
-internal class IosLegacyResourceFilesGeneratorTest {
+/** The legacy apple layout: one `<lang>.lproj/<table>.strings` per language, no plurals. */
+internal class IosLegacyResourceFilesGeneratorTest : TempDirectoryTest() {
 
-    private val generator = IosLegacyResourceFilesGenerator()
+    private val generator = IosLegacyResourceFilesGenerator("LoginStrings")
 
     private val file = bitsStringFile(
         section(
@@ -28,14 +29,14 @@ internal class IosLegacyResourceFilesGeneratorTest {
     fun writesOneLprojDirectoryPerLanguage() {
         val generated = generator.generateResources(file, defaultLanguage = "de").toPathMap()
 
-        assertTrue("de.lproj/Localizable.strings" in generated)
-        assertTrue("en.lproj/Localizable.strings" in generated)
+        assertTrue("de.lproj/LoginStrings.strings" in generated)
+        assertTrue("en.lproj/LoginStrings.strings" in generated)
         assertContains(
-            generated.getValue("de.lproj/Localizable.strings"),
+            generated.getValue("de.lproj/LoginStrings.strings"),
             "\"general.label.ok\" = \"OK-de\";"
         )
         assertContains(
-            generated.getValue("en.lproj/Localizable.strings"),
+            generated.getValue("en.lproj/LoginStrings.strings"),
             "\"general.label.ok\" = \"OK-en\";"
         )
     }
@@ -45,7 +46,7 @@ internal class IosLegacyResourceFilesGeneratorTest {
         val generated = generator.generateResources(file, defaultLanguage = "de").toPathMap()
 
         assertEquals(
-            setOf("de.lproj/Localizable.strings", "en.lproj/Localizable.strings"),
+            setOf("de.lproj/LoginStrings.strings", "en.lproj/LoginStrings.strings"),
             generated.keys
         )
     }
@@ -75,6 +76,17 @@ internal class IosLegacyResourceFilesGeneratorTest {
         val generated = generator.generateResources(bitsStringFile(section("General")), "de")
 
         assertEquals(emptyList(), generated)
+    }
+
+    @Test
+    fun claimsOnlyItsOwnTableInTheSharedLprojDirectories() {
+        val outputDir = dir("resources")
+        outputDir.writeStaleFile("de.lproj/OtherModuleStrings.strings")
+        outputDir.writeStaleFile("Assets.xcassets/Contents.json")
+
+        val owned = generator.ownedFiles(outputDir).map { it.relativeTo(outputDir).path }
+
+        assertEquals(listOf("de.lproj/LoginStrings.strings"), owned)
     }
 
     private fun List<Pair<File, String>>.toPathMap(): Map<String, String> =
