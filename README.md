@@ -20,6 +20,7 @@ Write every translation once, in one file. bitsstrings generates the native reso
 - [Multiple modules](#multiple-modules)
 - [Date & time extension](#date--time-extension-optional)
 - [Android-only projects](#android-only-projects)
+- [Upgrading](#upgrading)
 - [Comparison with moko-resources](#comparison-with-moko-resources)
 - [Building from source](#building-from-source)
 - [License](#license)
@@ -144,6 +145,10 @@ bitsstrings {
 ### 4. Wire up iOS
 
 The plugin writes `<iosTableName>.xcstrings` (by default `Localizable.xcstrings`) into `iosResourcesDir`. Add that file to your app target in Xcode once. Later regenerations update it in place. The plugin only ever replaces its own table, other files in `iosResourcesDir` stay untouched.
+
+The catalog is written exactly the way Xcode saves it: same indentation, same escaping, keys in Xcode's sort order. Opening and saving it in Xcode does not change it, a new key only adds its own lines at its sorted position, and the file is only rewritten when its content actually changes. Commit the generated catalog without fearing noisy diffs or merge conflicts across the whole file.
+
+The plugin owns `<iosTableName>.xcstrings` completely. Entries that do not come from the `strings.ini`, such as strings Xcode extracts from Swift code into the same catalog, are removed on the next generation. Keeping them is currently not supported. Put strings used directly from Swift into a catalog of their own, or turn off the extraction for the generated table (for example with `SWIFT_EMIT_LOC_STRINGS = NO` or `Text(verbatim:)` for literals that are not meant to be translated).
 
 With `legacyGeneration = true`, it writes one `<lang>.lproj/<iosTableName>.strings` per language instead. Add the folder as a **folder reference** so new languages are picked up automatically.
 
@@ -366,6 +371,22 @@ This generates a plain `object` (no `expect`/`actual`) backed by `R.string` / `R
 | `date-extension` | `com.bitsfabrik.bitsstrings:date-extension` | Optional localized date/time formatting for `kotlinx-datetime` |
 | `bitsstrings-generator` | plugin `com.bitsfabrik.bitsstrings.generator` | Gradle plugin for KMP projects |
 | `bitsstrings-generator` | plugin `com.bitsfabrik.bitsstrings.android.generator` | Gradle plugin for pure Android projects |
+
+## Upgrading
+
+No configuration property has been renamed or removed so far, every upgrade is a version bump. Always bump the plugin and `core` together: the generated code calls into `core` and expects the same version.
+
+### 1.1.0 → 1.2.0
+
+- **One-time diff of the String Catalog.** The first generation rewrites `<iosTableName>.xcstrings` in Xcode's own format with Xcode's key order. Commit that change on its own. From then on the file only changes when the `strings.ini` does, and saving it in Xcode leaves it untouched.
+- **Entries from Swift code are removed.** This is not new, but it used to disappear in the noise of the reformatted file. See [Wire up iOS](#4-wire-up-ios) if Xcode keeps adding them back.
+- **Narrower task outputs.** With a String Catalog, `generateBitsStringsIosMain` now declares only `<iosTableName>.xcstrings` as its output instead of the whole `iosResourcesDir`, so changes Xcode makes to other files in that folder no longer re-run the task. `iosResourcesDir` on the task is still there but no longer an output. Only builds that wired the task's outputs into tasks of their own are affected. Legacy generation (`legacyGeneration = true`) is unchanged.
+- **New plugin dependency.** The plugin now depends on ICU4J to sort keys exactly like Xcode. It only runs at build time and does not end up in your app.
+
+### 1.0.0 → 1.1.0
+
+- Additive only: `iosTableName` and `keyPrefix` are new and default to the previous behavior (`Localizable`, no prefix check).
+- Generated iOS code passes the table name to `core`, so `core` must be 1.1.0 as well.
 
 ## Comparison with moko-resources
 
