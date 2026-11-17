@@ -12,6 +12,7 @@ import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 
 /** The default apple flavour: a single pretty printed `<table>.xcstrings` catalog. */
 internal class IosStringCatalogResourceFileGeneratorTest {
@@ -38,8 +39,9 @@ internal class IosStringCatalogResourceFileGeneratorTest {
         val (catalogFile, content) = generated.single()
         assertEquals("LoginStrings.xcstrings", catalogFile.path)
 
-        // pretty printed with a two space indent, not the raw single line the transformer emits
-        assertContains(content, "\n  \"sourceLanguage\": \"de\"")
+        // written the way Xcode saves it: two space indent, " : " separators, no trailing line break
+        assertContains(content, "\n  \"sourceLanguage\" : \"de\",\n")
+        assertFalse(content.endsWith("\n"))
 
         assertEquals(
             setOf("general_label_ok", "general_message_count"),
