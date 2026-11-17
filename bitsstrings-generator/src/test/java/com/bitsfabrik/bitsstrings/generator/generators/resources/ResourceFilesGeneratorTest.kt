@@ -85,6 +85,45 @@ internal class ResourceFilesGeneratorTest : TempDirectoryTest() {
         assertFalse(stale.exists())
     }
 
+    @Test
+    fun leavesAFileWithUnchangedContentUntouched() {
+        val outputDir = dir("res")
+        val platformGenerator = FakePlatformStringResourcesGenerator(
+            "values-de/strings.xml" to "german content",
+        )
+        ResourceFilesGenerator(outputDir, platformGenerator).generateResources(file, "de")
+        val written = File(outputDir, "values-de/strings.xml")
+        written.setLastModified(0)
+
+        ResourceFilesGenerator(outputDir, platformGenerator).generateResources(file, "de")
+
+        assertEquals(0, written.lastModified())
+    }
+
+    @Test
+    fun rewritesAFileWhoseContentChanged() {
+        val outputDir = dir("res")
+        val written = outputDir.writeStaleFile("values-de/strings.xml")
+
+        ResourceFilesGenerator(
+            outputDir,
+            FakePlatformStringResourcesGenerator("values-de/strings.xml" to "german content"),
+        ).generateResources(file, "de")
+
+        assertEquals("german content", written.readText())
+    }
+
+    @Test
+    fun removesDirectoriesLeftEmptyByStaleFiles() {
+        val outputDir = dir("res")
+        outputDir.writeStaleFile("values-it/strings.xml")
+
+        ResourceFilesGenerator(outputDir, FakePlatformStringResourcesGenerator())
+            .generateResources(file, "de")
+
+        assertFalse(File(outputDir, "values-it").exists())
+    }
+
     private class FakePlatformStringResourcesGenerator(
         private vararg val files: Pair<String, String>,
         private val ownedFiles: List<String>? = null,
