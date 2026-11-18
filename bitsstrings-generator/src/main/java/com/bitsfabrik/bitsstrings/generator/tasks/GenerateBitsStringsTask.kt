@@ -13,10 +13,13 @@ import com.bitsfabrik.bitsstrings.generator.generators.resources.IosLegacyResour
 import com.bitsfabrik.bitsstrings.generator.generators.resources.IosStringCatalogResourceFileGenerator
 import org.gradle.api.GradleException
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
 /** Generates the mappings and platform resource files for one KMP source set. */
@@ -37,10 +40,27 @@ abstract class GenerateBitsStringsTask : AbstractGenerateStringsTask() {
     @get:Input
     abstract val iosTableName: Property<String>
 
-    /** Only set for the ios source set, see [androidResourcesDir]. */
+    /**
+     * Only set for the ios source set, see [androidResourcesDir]. Not an output itself: the
+     * directory is shared with the ios app and every other module, so a change Xcode makes to any
+     * file in it must not invalidate this task. See [iosStringCatalogFile] and [iosLegacyResourcesDir].
+     */
+    @get:Internal
+    abstract val iosResourcesDir: DirectoryProperty
+
+    /** The `<iosTableName>.xcstrings` catalog inside [iosResourcesDir], unless [legacyGeneration]. */
+    @get:Optional
+    @get:OutputFile
+    abstract val iosStringCatalogFile: RegularFileProperty
+
+    /**
+     * With [legacyGeneration] the table is split into one `<lang>.lproj/<iosTableName>.strings` per
+     * language, which are only known once the strings.ini is parsed, so the whole [iosResourcesDir]
+     * stays the output.
+     */
     @get:Optional
     @get:OutputDirectory
-    abstract val iosResourcesDir: DirectoryProperty
+    abstract val iosLegacyResourcesDir: DirectoryProperty
 
     @TaskAction
     fun generate() {

@@ -66,6 +66,14 @@ private fun KotlinSourceSet.registerGenerateTask(
                 val iosResourcesDir = project.file(extension.iosResourcesDir.get())
                 project.claimIosTable(iosResourcesDir, extension.iosTableName.get())
                 task.iosResourcesDir.set(iosResourcesDir)
+
+                if (extension.legacyGeneration.get()) {
+                    task.iosLegacyResourcesDir.set(iosResourcesDir)
+                } else {
+                    task.iosStringCatalogFile.set(
+                        iosResourcesDir.resolve("${extension.iosTableName.get()}.xcstrings")
+                    )
+                }
             }
 
             // commonMain holds the `expect` mappings and no resources

@@ -4,7 +4,6 @@ import com.bitsfabrik.bitsstrings.generator.testing.bitsStringFile
 import com.bitsfabrik.bitsstrings.generator.testing.plural
 import com.bitsfabrik.bitsstrings.generator.testing.section
 import com.bitsfabrik.bitsstrings.generator.testing.singular
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
@@ -15,8 +14,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * The transformer emits raw json text that `ResourceFilesGenerator` re-parses, so every test here
- * parses the output — if it is not valid json the real generation would fail too.
+ * The transformer builds the catalog as a json tree, `XcodeJsonWriter` turns it into text.
  */
 class IosStringDictTransformerTest {
 
@@ -28,7 +26,7 @@ class IosStringDictTransformerTest {
             section("General", singular("general_label_ok", "de" to "OK", "en" to "Yes")),
         )
 
-        val catalog = parse(transformer.processBitString(file, defaultLanguage = "de"))
+        val catalog = transformer.processBitString(file, defaultLanguage = "de")
 
         assertEquals("de", catalog.string("sourceLanguage"))
         assertEquals("1.0", catalog.string("version"))
@@ -44,7 +42,7 @@ class IosStringDictTransformerTest {
             section("General", singular("login_label_PasswordReset", "de" to "Reset")),
         )
 
-        val catalog = parse(transformer.processBitString(file, defaultLanguage = "de"))
+        val catalog = transformer.processBitString(file, defaultLanguage = "de")
 
         assertEquals(
             setOf("login_label_PasswordReset"),
@@ -58,7 +56,7 @@ class IosStringDictTransformerTest {
             section("General", singular("general_label_ok", "de" to "OK", "en" to "Yes")),
         )
 
-        val catalog = parse(transformer.processBitString(file, defaultLanguage = "de"))
+        val catalog = transformer.processBitString(file, defaultLanguage = "de")
         val localizations = catalog.obj("strings", "general_label_ok", "localizations")
 
         assertEquals(setOf("de", "en"), localizations.keys)
@@ -89,7 +87,7 @@ class IosStringDictTransformerTest {
             ),
         )
 
-        val catalog = parse(transformer.processBitString(file, defaultLanguage = "de"))
+        val catalog = transformer.processBitString(file, defaultLanguage = "de")
         val plural = catalog.obj(
             "strings", "general_message_count", "localizations", "de", "variations", "plural"
         )
@@ -115,7 +113,7 @@ class IosStringDictTransformerTest {
             ),
         )
 
-        val catalog = parse(transformer.processBitString(file, defaultLanguage = "de"))
+        val catalog = transformer.processBitString(file, defaultLanguage = "de")
 
         assertEquals(
             setOf("de"),
@@ -136,7 +134,7 @@ class IosStringDictTransformerTest {
             ),
         )
 
-        val catalog = parse(transformer.processBitString(file, defaultLanguage = "de"))
+        val catalog = transformer.processBitString(file, defaultLanguage = "de")
 
         assertEquals(
             setOf("one", "other"),
@@ -158,7 +156,7 @@ class IosStringDictTransformerTest {
             section("General", singular("general_label_greeting", "de" to "Hallo %s und %@ (%d)")),
         )
 
-        val catalog = parse(transformer.processBitString(file, defaultLanguage = "de"))
+        val catalog = transformer.processBitString(file, defaultLanguage = "de")
 
         assertEquals(
             "Hallo %1\$@ und %2\$@ (%3\$d)",
@@ -174,7 +172,7 @@ class IosStringDictTransformerTest {
             section("General", singular("general_label_quoted", "de" to "sag \"hallo\"")),
         )
 
-        val catalog = parse(transformer.processBitString(file, defaultLanguage = "de"))
+        val catalog = transformer.processBitString(file, defaultLanguage = "de")
 
         assertEquals(
             "sag \"hallo\"",
@@ -185,10 +183,26 @@ class IosStringDictTransformerTest {
     }
 
     @Test
-    fun emitsAnEmptyButValidCatalogForAFileWithoutStrings() {
-        val catalog = parse(
-            transformer.processBitString(bitsStringFile(section("General")), defaultLanguage = "de")
+    fun keepsJsonEscapesOfTheIniValue() {
+        // the catalog used to be raw json text, so a `\n` in the strings.ini has always been a line break
+        val file = bitsStringFile(
+            section("General", singular("general_label_lines", "de" to "eins\\nzwei")),
         )
+
+        val catalog = transformer.processBitString(file, defaultLanguage = "de")
+
+        assertEquals(
+            "eins\nzwei",
+            catalog.string(
+                "strings", "general_label_lines", "localizations", "de", "stringUnit", "value"
+            )
+        )
+    }
+
+    @Test
+    fun emitsAnEmptyButValidCatalogForAFileWithoutStrings() {
+        val catalog =
+            transformer.processBitString(bitsStringFile(section("General")), defaultLanguage = "de")
 
         assertTrue(catalog.obj("strings").isEmpty())
         assertEquals("de", catalog.string("sourceLanguage"))
@@ -201,13 +215,11 @@ class IosStringDictTransformerTest {
             section("Login", singular("login_label_reset", "de" to "Reset")),
         )
 
-        val catalog = parse(transformer.processBitString(file, defaultLanguage = "de"))
+        val catalog = transformer.processBitString(file, defaultLanguage = "de")
 
         assertEquals(setOf("general_label_ok", "login_label_reset"), catalog.obj("strings").keys)
         assertFalse(catalog.obj("strings").containsKey("Login"))
     }
-
-    private fun parse(raw: String): JsonObject = Json.parseToJsonElement(raw).jsonObject
 
     private fun JsonObject.obj(vararg path: String): JsonObject =
         path.fold(this as JsonElement) { current, key -> current.jsonObject.getValue(key) }.jsonObject

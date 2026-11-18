@@ -29,6 +29,7 @@ dependencies {
     compileOnly(libs.androidSdkCommon)
     implementation(libs.kotlinPoet)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.icu4j)
 
     testImplementation(kotlin("test-junit"))
 }
